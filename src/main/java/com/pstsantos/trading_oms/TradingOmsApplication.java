@@ -9,5 +9,5 @@ public class TradingOmsApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(TradingOmsApplication.class, args);
 	}
-
+			
 }
