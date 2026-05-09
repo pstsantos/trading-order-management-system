@@ -25,7 +25,7 @@ The `OrderFactory` creates the correct order subclass based on a type string.
 Callers never reference concrete classes (`MarketOrder`, `LimitOrder`, `StopOrder`) directly.
 
 <p align="center">
-  <img src="assets/factory-uml.png" alt="Factory Pattern UML" width="650"/>
+  <img src="assets/factoryUML.png" alt="Factory Pattern UML" width="650"/>
 </p>
 
 ### Strategy Pattern — Order Matching
@@ -35,7 +35,7 @@ runtime without changing any other class. Two implementations are provided:
 `FifoMatchingStrategy` and `PriceTimeMatchingStrategy`.
 
 <p align="center">
-  <img src="assets/strategy-uml.png" alt="Strategy Pattern UML" width="650"/>
+  <img src="assets/strategyUML.png" alt="Strategy Pattern UML" width="650"/>
 </p>
 
 ## API Endpoints
