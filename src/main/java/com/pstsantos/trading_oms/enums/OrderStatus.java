@@ -1,5 +1,5 @@
 package com.pstsantos.trading_oms.enums;
 
-public class OrderStatus {
-    public static final String PENDING = "PENDING";
+public enum OrderStatus {
+    NEW, PENDING, PARTIALLY_FILLED, FILLED, CANCELLED, REJECTED
 }

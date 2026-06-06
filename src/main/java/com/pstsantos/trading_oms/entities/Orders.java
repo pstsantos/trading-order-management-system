@@ -12,7 +12,7 @@ public class Orders {
     private double price;
     private OrderType type;
     private OrderSide side;
-    private String status;
+    private OrderStatus status;
 
     private Orders() {}
 
@@ -22,7 +22,7 @@ public class Orders {
     public double getPrice() { return price; }
     public OrderType getType() { return type; }
     public OrderSide getSide() { return side; }
-    public String getStatus() { return status; }
+    public OrderStatus getStatus() { return status; }
 
     public static class Builder {
         private String symbol;
