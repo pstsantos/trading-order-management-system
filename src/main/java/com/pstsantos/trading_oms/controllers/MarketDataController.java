@@ -26,6 +26,12 @@ public class MarketDataController {
         return Map.of("symbol", symbol.toUpperCase(), "price", price);
     }
 
+    @GetMapping("/live/{symbol}")
+    public Map<String, Object> getLivePrice(@PathVariable String symbol) {
+        double price = marketDataService.fetchLivePrice(symbol);
+        return Map.of("symbol", symbol.toUpperCase(), "price", price, "live", true);
+    }
+
     @PutMapping("/price/{symbol}")
     public Map<String, Object> updatePrice(@PathVariable String symbol, @RequestBody Map<String, Double> body) {
         double price = body.get("price");

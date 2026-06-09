@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Trading OMS</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: #0d0f14;
+            color: #c9d1d9;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            min-height: 100vh;
+        }
+
+        header {
+            background: #010409;
+            border-bottom: 1px solid #1f2937;
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        header h1 {
+            font-size: 14px;
+            font-weight: bold;
+            color: #58a6ff;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        #ticker-strip {
+            display: flex;
+            gap: 24px;
+            font-size: 12px;
+        }
+
+        .tick { display: flex; gap: 6px; }
+        .tick-sym { color: #8b949e; }
+        .tick-price { color: #3fb950; font-weight: bold; }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 340px 1fr;
+            gap: 0;
+            height: calc(100vh - 49px);
+        }
+
+        .panel {
+            border-right: 1px solid #1f2937;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            background: #010409;
+            border-bottom: 1px solid #1f2937;
+            padding: 10px 16px;
+            font-size: 11px;
+            color: #8b949e;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .panel-body {
+            padding: 16px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .field { margin-bottom: 12px; }
+
+        label {
+            display: block;
+            font-size: 11px;
+            color: #8b949e;
+            margin-bottom: 4px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        input, select {
+            width: 100%;
+            background: #161b22;
+            border: 1px solid #30363d;
+            color: #c9d1d9;
+            padding: 8px 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            outline: none;
+            border-radius: 2px;
+        }
+
+        input:focus, select:focus { border-color: #58a6ff; }
+
+        select option { background: #161b22; }
+
+        .btn {
+            width: 100%;
+            padding: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            border: none;
+            cursor: pointer;
+            border-radius: 2px;
+            text-transform: uppercase;
+        }
+
+        .btn-primary { background: #238636; color: #fff; margin-bottom: 8px; }
+        .btn-primary:hover { background: #2ea043; }
+        .btn-secondary { background: #1f2937; color: #c9d1d9; margin-bottom: 8px; }
+        .btn-secondary:hover { background: #374151; }
+        .btn-accent { background: #1d3557; color: #58a6ff; }
+        .btn-accent:hover { background: #253d6b; }
+
+        .divider {
+            border: none;
+            border-top: 1px solid #1f2937;
+            margin: 16px 0;
+        }
+
+        .strategy-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .strategy-row .btn { margin-bottom: 0; }
+
+        #toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: #161b22;
+            border: 1px solid #30363d;
+            color: #c9d1d9;
+            padding: 10px 16px;
+            font-size: 12px;
+            border-radius: 2px;
+            display: none;
+            z-index: 999;
+            max-width: 320px;
+        }
+
+        #toast.success { border-color: #3fb950; color: #3fb950; }
+        #toast.error   { border-color: #f85149; color: #f85149; }
+
+        .main-panel { display: flex; flex-direction: column; overflow: hidden; }
+
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #1f2937;
+            background: #010409;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            font-size: 11px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: #8b949e;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+
+        .tab.active { color: #58a6ff; border-bottom-color: #58a6ff; }
+
+        .tab-content { display: none; flex: 1; overflow-y: auto; padding: 16px; }
+        .tab-content.active { display: block; }
+
+        table { width: 100%; border-collapse: collapse; }
+
+        th {
+            text-align: left;
+            font-size: 11px;
+            color: #8b949e;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            padding: 8px 10px;
+            border-bottom: 1px solid #1f2937;
+        }
+
+        td {
+            padding: 8px 10px;
+            border-bottom: 1px solid #0d1117;
+            font-size: 12px;
+        }
+
+        tr:hover td { background: #161b22; }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 7px;
+            border-radius: 2px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .badge-pending  { background: #2d2a00; color: #e3b341; }
+        .badge-filled   { background: #0d2516; color: #3fb950; }
+        .badge-cancelled{ background: #2d0f0f; color: #f85149; }
+
+        .side-buy  { color: #3fb950; font-weight: bold; }
+        .side-sell { color: #f85149; font-weight: bold; }
+
+        #strategy-status {
+            font-size: 11px;
+            color: #8b949e;
+            margin-bottom: 12px;
+        }
+
+        #strategy-status span { color: #58a6ff; font-weight: bold; }
+
+        .price-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 10px;
+        }
+
+        .price-card {
+            background: #161b22;
+            border: 1px solid #30363d;
+            padding: 12px;
+            border-radius: 2px;
+        }
+
+        .price-card-sym { font-size: 11px; color: #8b949e; margin-bottom: 4px; }
+        .price-card-val { font-size: 18px; color: #3fb950; font-weight: bold; }
+
+        .empty { color: #4a5568; font-size: 12px; padding: 24px 0; text-align: center; }
+
+        #match-result {
+            margin-top: 12px;
+            padding: 10px;
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 2px;
+            font-size: 12px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>⬡ Trading OMS</h1>
+    <div id="ticker-strip"></div>
+</header>
+
+<div class="grid">
+
+    <div class="panel">
+        <div class="panel-header">Place Order</div>
+        <div class="panel-body">
+
+            <div class="field">
+                <label>Type</label>
+                <select id="o-type">
+                    <option value="MARKET">MARKET</option>
+                    <option value="LIMIT">LIMIT</option>
+                    <option value="STOP">STOP</option>
+                </select>
+            </div>
+            <div class="field">
+                <label>Symbol</label>
+                <input id="o-symbol" type="text" placeholder="AAPL" maxlength="6"/>
+            </div>
+            <div class="field">
+                <label>Side</label>
+                <select id="o-side">
+                    <option value="BUY">BUY</option>
+                    <option value="SELL">SELL</option>
+                </select>
+            </div>
+            <div class="field">
+                <label>Quantity</label>
+                <input id="o-quantity" type="number" placeholder="100" min="1"/>
+            </div>
+            <div class="field" id="price-field">
+                <label>Price</label>
+                <input id="o-price" type="number" placeholder="185.50" step="0.01"/>
+            </div>
+
+            <button class="btn btn-primary" onclick="placeOrder()">Submit Order</button>
+
+            <hr class="divider"/>
+
+            <div class="panel-header" style="padding:0 0 10px 0; background:none; border:none;">Matching Engine</div>
+            <div id="strategy-status">Active strategy: <span id="active-strat">FIFO</span></div>
+
+            <div class="strategy-row">
+                <button class="btn btn-secondary" onclick="setStrategy('FIFO')">FIFO</button>
+                <button class="btn btn-secondary" onclick="setStrategy('PRICE_TIME')">Price-Time</button>
+            </div>
+
+            <button class="btn btn-accent" onclick="runMatch()">Run Matching Engine</button>
+            <div id="match-result"></div>
+
+        </div>
+    </div>
+
+    <div class="main-panel">
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('orders')">Order Book</div>
+            <div class="tab" onclick="switchTab('pending')">Pending</div>
+            <div class="tab" onclick="switchTab('prices')">Market Prices</div>
+        </div>
+
+        <div id="tab-orders" class="tab-content active">
+            <table>
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Type</th>
+                    <th>Symbol</th>
+                    <th>Side</th>
+                    <th>Qty</th>
+                    <th>Price</th>
+                    <th>Status</th>
+                </tr>
+                </thead>
+                <tbody id="orders-body">
+                <tr><td colspan="7" class="empty">No orders yet.</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div id="tab-pending" class="tab-content">
+            <table>
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Type</th>
+                    <th>Symbol</th>
+                    <th>Side</th>
+                    <th>Qty</th>
+                    <th>Price</th>
+                </tr>
+                </thead>
+                <tbody id="pending-body">
+                <tr><td colspan="6" class="empty">No pending orders.</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div id="tab-prices" class="tab-content">
+            <div id="price-grid" class="price-grid"></div>
+        </div>
+    </div>
+
+</div>
+
+<div id="toast"></div>
+
+<script>
+    const BASE = '';
+
+    document.getElementById('o-type').addEventListener('change', function() {
+        document.getElementById('price-field').style.display =
+            this.value === 'MARKET' ? 'none' : 'block';
+    });
+
+    function toast(msg, type) {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.className = type;
+        t.style.display = 'block';
+        setTimeout(() => t.style.display = 'none', 3000);
+    }
+
+    function switchTab(name) {
+        document.querySelectorAll('.tab').forEach((t, i) => {
+            t.classList.toggle('active', ['orders','pending','prices'][i] === name);
+        });
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.getElementById('tab-' + name).classList.add('active');
+        if (name === 'orders') loadOrders();
+        if (name === 'pending') loadPending();
+        if (name === 'prices') loadPrices();
+    }
+
+    function statusBadge(s) {
+        const map = { PENDING: 'badge-pending', FILLED: 'badge-filled', CANCELLED: 'badge-cancelled' };
+        return `<span class="badge ${map[s] || ''}">${s}</span>`;
+    }
+
+    function sideCell(s) {
+        return `<span class="${s === 'BUY' ? 'side-buy' : 'side-sell'}">${s}</span>`;
+    }
+
+    function shortId(id) {
+        return String(id).slice(-6);
+    }
+
+    async function loadOrders() {
+        const res = await fetch(BASE + '/orders');
+        const data = await res.json();
+        const tbody = document.getElementById('orders-body');
+        if (!data.length) { tbody.innerHTML = '<tr><td colspan="7" class="empty">No orders yet.</td></tr>'; return; }
+        tbody.innerHTML = data.map(o => `
+      <tr>
+        <td>#${shortId(o.id)}</td>
+        <td>${o.orderType}</td>
+        <td>${o.symbol}</td>
+        <td>${sideCell(o.side)}</td>
+        <td>${o.quantity}</td>
+        <td>${o.price ? '$' + o.price.toFixed(2) : '—'}</td>
+        <td>${statusBadge(o.status)}</td>
+      </tr>`).join('');
+    }
+
+    async function loadPending() {
+        const res = await fetch(BASE + '/orders/pending');
+        const data = await res.json();
+        const tbody = document.getElementById('pending-body');
+        if (!data.length) { tbody.innerHTML = '<tr><td colspan="6" class="empty">No pending orders.</td></tr>'; return; }
+        tbody.innerHTML = data.map(o => `
+      <tr>
+        <td>#${shortId(o.id)}</td>
+        <td>${o.orderType}</td>
+        <td>${o.symbol}</td>
+        <td>${sideCell(o.side)}</td>
+        <td>${o.quantity}</td>
+        <td>${o.price ? '$' + o.price.toFixed(2) : '—'}</td>
+      </tr>`).join('');
+    }
+
+    async function loadPrices() {
+        const symbols = [
+            'AAPL', 'MSFT', 'TSLA', 'GOOGL', 'AMZN',
+            'META', 'NVDA', 'JPM', 'GS', 'NFLX',
+            'AMD'
+        ];
+        const grid = document.getElementById('price-grid');
+        grid.innerHTML = symbols.map(s => `
+      <div class="price-card" id="card-${s}">
+        <div class="price-card-sym">${s}</div>
+        <div class="price-card-val">Loading...</div>
+      </div>`).join('');
+
+        for (const sym of symbols) {
+            try {
+                const res = await fetch(BASE + '/market/live/' + sym);
+                const data = await res.json();
+                const card = document.getElementById('card-' + sym);
+                if (card) card.querySelector('.price-card-val').textContent = '$' + data.price.toFixed(2);
+            } catch(e) {}
+        }
+    }
+
+    async function loadTicker() {
+        const res = await fetch(BASE + '/market/prices');
+        const data = await res.json();
+        document.getElementById('ticker-strip').innerHTML =
+            Object.entries(data).map(([sym, price]) =>
+                `<div class="tick"><span class="tick-sym">${sym}</span><span class="tick-price">$${price.toFixed(2)}</span></div>`
+            ).join('');
+    }
+
+    async function placeOrder() {
+        const type     = document.getElementById('o-type').value;
+        const symbol   = document.getElementById('o-symbol').value.trim().toUpperCase();
+        const side     = document.getElementById('o-side').value;
+        const quantity = parseInt(document.getElementById('o-quantity').value);
+        const price    = parseFloat(document.getElementById('o-price').value) || 0;
+
+        if (!symbol || !quantity) { toast('Symbol and quantity are required.', 'error'); return; }
+
+        const body = { type, symbol, quantity, side, price };
+
+        const res = await fetch(BASE + '/orders', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+
+        if (res.ok) {
+            toast('Order placed — ' + type + ' ' + side + ' ' + quantity + ' ' + symbol, 'success');
+            loadOrders();
+        } else {
+            const err = await res.json();
+            toast(err.error || 'Order failed.', 'error');
+        }
+    }
+
+    async function setStrategy(name) {
+        const res = await fetch(BASE + '/orders/strategy', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ strategy: name })
+        });
+        const data = await res.json();
+        document.getElementById('active-strat').textContent = data.strategy || name;
+        toast('Strategy set to ' + name, 'success');
+    }
+
+    async function runMatch() {
+        const res = await fetch(BASE + '/orders/match', { method: 'POST' });
+        const data = await res.json();
+        const box = document.getElementById('match-result');
+        box.style.display = 'block';
+        box.innerHTML = `Strategy: <strong>${data.strategy}</strong> — Matched: <strong>${data.matchedCount}</strong> order(s)`;
+        toast('Matching complete — ' + data.matchedCount + ' filled', 'success');
+        loadOrders();
+    }
+
+    async function initStrategy() {
+        const res = await fetch(BASE + '/orders/strategy');
+        const data = await res.json();
+        document.getElementById('active-strat').textContent = data.activeStrategy;
+    }
+
+    loadTicker();
+    loadOrders();
+    initStrategy();
+    setInterval(loadTicker, 30000);
+</script>
+
+</body>
+</html>
